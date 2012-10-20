@@ -23,31 +23,7 @@ interactive_add_project () {
 
 }
 
-init_hackon () {
-  notice "No previous installation of hackon detected."
-  notice "Creating ~/.hackon"
-  mkdir -p $HACKONHOME/projects/
-  mkdir -p $HACKONHOME/active_projects/
-
-  notice "Copying project descriptor helper"
-  cp pp.py $HACKONHOME/pp.py
-
-  notice "Copying default projcts to project dir"
-  cp projects/*.json $HACKONHOME/projects/
-
-  notice "Copying dependency helpers"
-  rm -rf $HACKONHOME/deps
-  cp -R deps $HACKONHOME/deps
-
-  notice "Creating projects directory"
-  mkdir -p $HOME/projects
-}
-
 list_projects () {
-  if ! [ -d $HACKONHOME ]; then
-    init_hackon
-  fi
-
   for project in $HACKONHOME/projects/*.json
   do
     /usr/bin/env python $PP list $project
@@ -127,6 +103,12 @@ hackon_project () {
     error "Bailing"
     return
   fi
+
+  if ! [ -d $HACKONHOME/active_projects ]; then
+    notice "Active project directory does not exist. Creating..."
+    mkdir -p $HACONHOME/active_projects
+  fi
+
   notice "Hacking on "$PROJECT
 
   if ! [ -f $ACTIVEPROJECT ]; then
@@ -180,7 +162,6 @@ hackon () {
         act "-v     version information for this tool"
         act "-q     run quietly without printing informations"
         act "-D     print debugging information at runtime"
-        act "-i     initialize hackon directories"
         act "-d     disable the selected project"
         echo;;
     -v)
@@ -200,7 +181,6 @@ hackon () {
     -D) DEBUG=1; shift 1 ;;
           -s) SIZE=$2; shift 2 ;;
     -k) KEY=$2; shift 2 ;;
-    -i) init_hackon; break;;
     -d) disable_project $2; break;;
     --) shift; break ;;
     *)  hackon_project $1;
