@@ -1,0 +1,210 @@
+#!/bin/zsh
+#
+# hackon
+# ******
+#
+# Assisting you in going though the dependency hell jungle when you just want
+# to hack on some code.
+#
+# author: Arturo "hellais" Filastò <art@fuffa.org>
+# license: see LICENSE
+
+HACKONHOME=$HOME"/.hackon"
+PROJECTHOME=$HOME"/projects"
+PP=$HACKONHOME"/pp.py"
+
+notice() { if ! [ $QUIET ]; then echo "[*] $1"; fi }
+act()    { if ! [ $QUIET ]; then echo " .  $1"; fi }
+error()  { if ! [ $QUIET ]; then echo "[!] $1"; fi }
+func()   { if [ $DEBUG ]; then echo "[D] $1"; fi }
+
+
+interactive_add_project () {
+
+}
+
+init_hackon () {
+  notice "No previous installation of hackon detected."
+  notice "Creating ~/.hackon"
+  mkdir -p $HACKONHOME/projects/
+  mkdir -p $HACKONHOME/active_projects/
+
+  notice "Copying project descriptor helper"
+  cp pp.py $HACKONHOME/pp.py
+
+  notice "Copying default projcts to project dir"
+  cp projects/*.json $HACKONHOME/projects/
+
+  notice "Copying dependency helpers"
+  rm -rf $HACKONHOME/deps
+  cp -R deps $HACKONHOME/deps
+
+  notice "Creating projects directory"
+  mkdir -p $HOME/projects
+}
+
+list_projects () {
+  if ! [ -d $HACKONHOME ]; then
+    init_hackon
+  fi
+
+  for project in $HACKONHOME/projects/*.json
+  do
+    /usr/bin/env python $PP list $project
+  done
+}
+
+list_active_projects () {
+  for project in $HACKONHOME/active_projects/*
+  do
+    source $project
+    echo "* $SHORTNAME ($NAME)"
+    echo "  path: $PROJECTHOME/$SHORTNAME"
+    echo "  type: $TYPE"
+  done
+}
+
+disable_project () {
+  PROJECT=$1
+  PROJECTDESC=$HACKONHOME/projects/$PROJECT.json
+  ACTIVEPROJECT=$HACKONHOME/active_projects/$PROJECT
+  notice "Deleting $PROJECT from active projects."
+  rm $ACTIVEPROJECT
+}
+
+process_dependencies () {
+  TYPE=$1
+  INSTALLED=false
+
+  if [ `command -v apt-get` ]; then
+    notice "Detected that you are on a Debian based system."
+    notice "Installing these dependencies $DEBIAN_DEPS"
+    # XXX this is a bad hack
+    sudo apt-get install `echo -n $DEBIAN_DEPS`
+    VIRTUALENV="virtualenv"
+    PIP="pip"
+    INSTALLED=true
+  fi
+
+  if [ `command -v pacman` ]; then
+    notice "Detected that you are on an Arch linux based system."
+    notice "Installing these dependencies $ARCH_DEPS"
+    # XXX this is a bad hack
+    sudo pacman -S `echo -n $ARCH_DEPS`
+    VIRTUALENV="virtualenv2"
+    PIP="pip2"
+    INSTALLED=true
+  fi
+
+  if [ `command -v brew` ]; then
+    notice "Detected that you are on an Mac OSX (brew) based system."
+    notice "Installing these dependencies $BREW_DEPS"
+    # XXX this is a bad hack
+    sudo brew install `echo -n $BREW_DEPS`
+    VIRTUALENV="virtualenv"
+    PIP="pip"
+    INSTALLED=true
+  fi
+
+  if ! $INSTALLED; then
+    error "Your platform is not supported. You will have to install dependencies manually."
+    notice "These are the debian dependencies:"
+    act $DEBIAN_DEPS
+    notice "Install your dependencies then come back here"
+    notice "Press enter when you have installed the dependencies manually"
+    read
+  fi
+
+  source $HACKONHOME/deps/$TYPE
+}
+
+hackon_project () {
+  PROJECT=$1
+  PROJECTDESC=$HACKONHOME/projects/$PROJECT.json
+  ACTIVEPROJECT=$HACKONHOME/active_projects/$PROJECT
+  if ! [ -f $PROJECTDESC ]; then
+    error "Specification for $PROJECT does not exist!"
+    error "Bailing"
+    return
+  fi
+  notice "Hacking on "$PROJECT
+
+  if ! [ -f $ACTIVEPROJECT ]; then
+    notice "Firt time working on this project."
+    notice "Initializing it!"
+    /usr/bin/env python $PP init $PROJECTDESC $ACTIVEPROJECT
+    source $ACTIVEPROJECT
+    cd $PROJECTHOME
+    if [ -f $PROJECTHOME/$SHORTNAME ]; then
+      CHOICE=
+      notice "Git copy of project already exits."
+      vared -p "Should I delete(d) it, rename it(r), keep it(k) (d|r|k)? " CHOICE
+      case "$CHOICE" in
+        d) rm -rf $SHORTNAME; git clone $GITREPO $SHORTNAME;;
+        r) mv $SHORTNAME $SHORTNAME.orig; git clone $GITREPO $SHORTNAME;;
+        k) ;;
+        *) error "Invalid option $CHOICE"
+      esac
+    else
+        git clone $GITREPO $SHORTNAME
+    fi
+    notice "Processing dependencies"
+    process_dependencies $TYPE
+    cd $SHORTNAME
+
+    source $HACKONHOME/deps/$TYPE.postinstall
+
+    notice "Fetching hackon start page"
+    curl $HACKONPAGE | vmore
+  fi
+  cd $PROJECTHOME/$SHORTNAME
+  zsh $HACKONHOME/deps/$TYPE.post
+}
+
+hackon () {
+  ARGS=$@[@]
+
+  OPTS=`getopt -o havqDli:d -n 'hackon' -- "$@"`
+  while true; do
+      case "$1" in
+    -h)
+        act ""
+        notice "Syntax: hackon [options] project"
+        act ""
+
+        notice "Options:"
+        act ""
+        act "-h     print this help"
+        act "-a     list active projects"
+        act "-l     list the currently installed projects"
+        act "-v     version information for this tool"
+        act "-q     run quietly without printing informations"
+        act "-D     print debugging information at runtime"
+        act "-i     initialize hackon directories"
+        act "-d     disable the selected project"
+        echo;;
+    -v)
+        act ""
+        echo "v0.1"
+        act ""
+        break;;
+    -l)
+        notice "List of projects"
+        list_projects
+        break;;
+    -a)
+        notice "List of active projects"
+        list_active_projects
+        break;;
+    -q) QUIET=1; shift 1 ;;
+    -D) DEBUG=1; shift 1 ;;
+          -s) SIZE=$2; shift 2 ;;
+    -k) KEY=$2; shift 2 ;;
+    -i) init_hackon; break;;
+    -d) disable_project $2; break;;
+    --) shift; break ;;
+    *)  hackon_project $1;
+        break ;;
+      esac
+  done
+}

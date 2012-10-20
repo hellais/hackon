@@ -1,0 +1,8 @@
+{
+    "name": "GLBackend",
+    "type": "python",
+    "homepage": "https://github.com/globaleaks/GLBackend",
+    "bug_tracker": "https://github.com/globaleaks/GLBackend/issues",
+    "hackon_page": "https://raw.github.com/globaleaks/GLBackend/master/README.md",
+    "git_repo": "https://github.com/globaleaks/GLBackend.git"
+}
