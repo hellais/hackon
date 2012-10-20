@@ -92,6 +92,7 @@ process_dependencies () {
   fi
 
   source $HACKONHOME/deps/$TYPE
+  $EXTRA_CMD
 }
 
 hackon_project () {
