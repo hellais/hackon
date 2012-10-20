@@ -107,7 +107,7 @@ hackon_project () {
 
   if ! [ -d $HACKONHOME/active_projects ]; then
     notice "Active project directory does not exist. Creating..."
-    mkdir -p $HACONHOME/active_projects
+    mkdir -p $HACKONHOME/active_projects
   fi
 
   notice "Hacking on "$PROJECT
