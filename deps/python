@@ -2,5 +2,4 @@ DEBIAN_DEPS="python python-pip python-dev"
 ARCH_DEPS="python2"
 BREW_DEPS="python"
 PIP_DEPS="virtualenv"
-echo "Running $PIP install $PIP_DEPS"
-sudo $PIP install `echo -n $PIP_DEPS`
+EXTRA_CMD="$PIP install `echo -n $PIP_DEPS`"
