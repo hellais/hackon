@@ -9,5 +9,5 @@ To get started with hackon just do the following:
 
 If you are of the paranoid type you can do the following:
 
-  curl --ssl https://raw.github.com/hellais/hackon/master/i.sh | sh
+    curl --ssl https://raw.github.com/hellais/hackon/master/i.sh | sh
 
