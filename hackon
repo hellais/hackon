@@ -74,9 +74,9 @@ process_dependencies () {
 
   if [ `command -v brew` ]; then
     notice "Detected that you are on an Mac OSX (brew) based system."
-    notice "Installing these dependencies $BREW_DEPS"
+    notice "Installing these dependencies $BREW_DEPS (debian: $DEBIAN_DEPS)"
     # XXX this is a bad hack
-    sudo brew install `echo -n $BREW_DEPS`
+    brew install `echo -n $BREW_DEPS`
     VIRTUALENV="virtualenv"
     PIP="pip"
     INSTALLED=true
