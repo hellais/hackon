@@ -3,7 +3,7 @@
     "type": "python",
     "homepage": "http://ooni.nu/",
     "bug_tracker": "https://trac.torproject.org/projects/tor/query?status=accepted&status=assigned&status=needs_information&status=needs_review&status=needs_revision&status=new&status=reopened&component=Ooni&order=priority",
-    "hackon_page": "http://hackon.ooni.nu/",
+    "hackon_page": "https://gitweb.torproject.org/ooni-probe.git/blob_plain/HEAD:/HACKING",
     "dev_documentation": "http://ooni.readthedocs.org/",
     "git_repo": "https://git.torproject.org/ooni-probe.git"
 }
