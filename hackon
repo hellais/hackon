@@ -155,7 +155,11 @@ hackon_project () {
     source $HACKONHOME/deps/$TYPE.postinstall
 
     notice "Fetching hackon start page"
-    curl $HACKONPAGE | vmore
+    if [ `command -v vmore` ]; then
+      curl $HACKONPAGE | vmore
+    else
+      curl $HACKONPAGE | more
+    fi
   fi
   cd $PROJECTHOME/$SHORTNAME
   zsh $HACKONHOME/deps/$TYPE.post
